@@ -127,6 +127,7 @@ if uploaded_file is not None:
         fig,ax = plt.subplots()
         ax = sns.heatmap(user_heatmap)
         st.pyplot(fig)
+        
 
 
 

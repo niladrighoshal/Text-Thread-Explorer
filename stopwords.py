@@ -81,4 +81,4 @@ def create_python_list(input_file_path, output_file_path):
 input_path = 'D:\Python Proj\major_vs\cleaned_sorted_stopwords.txt'
 output_path = 'D:\Python Proj\major_vs\python_list_output.txt'
 
-create_python_list(input_path, output_path)
+create_python_list(input_path, output_path) 
