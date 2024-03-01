@@ -1,69 +1,76 @@
 import re
+import datetime
+import calendar
 import pandas as pd
 
-def preprocess(data):
-    pattern1 = r'(\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{1,2}(?:\s?[ap]m)?\s-\s)'
+re1 = r'WhatsApp\sNotification'
+
+def preprocess(df):
     
-    def convert_date_format(match):
-        date_str = match.group(0).strip()
-        return pd.to_datetime(date_str, format='%d/%m/%y, %I:%M %p -').strftime('%d/%m/%Y, %H:%M -')
+    df['only_Date'] = datetime.datetime.strptime(calendar.month_name[df['Month']] + ' ' + str(df['Date']) + ', 20' + str(df['Year']), '%B %d, %Y').strftime('%A')
     
-    data_formatted = re.sub(pattern1, convert_date_format, data)
-
-    data = data_formatted
-
-    pattern = '\d{1,2}/\d{1,2}/\d{4},\s\d{1,2}:\d{1,2}\s-'
-
-    messages = re.split(pattern, data)[1:]
-    dates = re.findall(pattern, data)
-
-
-    df = pd.DataFrame({'user_message' :messages, 'message_date' : dates})
-    # conevrt message_date type
-    df['message_date'] = pd.to_datetime(df['message_date'], format='%d/%m/%Y, %H:%M -')
-    df.rename(columns = {'message_date' : 'date'}, inplace =True)
-
-
-    #separate users and mesages
-    users = []
-    messages = []
-
-    for message in df['user_message']:
-        entry = re.split('([\w\W]+?):\s', message)
-        if entry[1:]:
-            users.append(entry[1])
-            messages.append(entry[2])
-        else:
-            users.append('whatsapp notification')
-            messages.append(entry[0])
-
-    df['user'] = users 
-    df['message'] = messages 
-    df.drop(columns = ['user_message'], inplace = True)
-
-    df['year'] = df['date'].dt.year
-
-    df['month'] = df['date'].dt.month_name()
-    df['month_num'] = df['date'].dt.month
-
-    df['day'] = df['date'].dt.day
-    df['day_name'] = df['date'].dt.day_name()
-    df['only_date'] = df['date'].dt.date  
-
-    df['hour'] = df['date'].dt.hour
-
-    df['minute'] = df['date'].dt.minute  
-
     period = []
-    for hour in df[['day_name', 'hour']]['hour']:
-        if hour == 23:
-            period.append(str(hour) + "-" + str('00'))
-        elif hour == 0:
-            period.append(str('00') + "-" + str(hour + 1)) 
+    for Hour in df[['day_name', 'Hour']]['Hour']:
+        if Hour == 23:
+            period.append(str(Hour) + "-" + str('00'))
+        elif Hour == 0:
+            period.append(str('00') + "-" + str(Hour + 1)) 
         else:
-            period.append(str(hour) + "-" + str(hour + 1))
+            period.append(str(Hour) + "-" + str(Hour + 1))
 
     df['period'] = period   
 
     return df 
 
+def Message_extractor(chat, pattern, n, z):
+
+  chat = re.split(pattern, chat)
+  # print('RegEx split = ', chat, '\nLength of split string list : ', len(chat), '\nInfo for individual Message :-')
+  chat = [[int(chat[i]), int(chat[i+1]), int(chat[i+2]), # DD/MM/YY or MM/DD/YY
+      int(chat[i+3]) + (12 if (len(chat[i+5]) == 3 and (chat[i+5][1] == 'p' or chat[i+5][1] == 'P')) else 0), int(chat[i+4]), # HH:MM
+      chat[i+6][0:chat[i+6].index(':')] if ':' in chat[i+6] else 'WhatsApp Notification', # User
+      chat[i+6][(chat[i+6].index(':')+2 if ':' in chat[i+6] else 0):]] # Message
+      for i in range(1,len(chat),7)]
+
+# Filtering out WhatsApp Notifications
+  
+  chat = filter(lambda x: len(re.findall(re1, x[5])) == 0, chat)
+
+
+  # Making dataframe
+  df = pd.DataFrame(chat)
+
+
+  # Taking metrics of columns
+  v = []
+  if (z == 0):
+    v = [df[0].var(), df[1].var()]
+  elif (z == 1):
+    v = [df[0].nunique(), df[1].nunique()]
+
+  # Reordering columns
+    # [0 : DD, 1 :MM, 2 :YY, 3 :HH, 4 :mm, 5 :Users, 6 :Messages]
+  if (v[0] >= v[1]):
+    df = df[[0, 1, 2, 3, 4, 5, 6]]
+  else:
+    df = df[[1, 0, 2, 3, 4, 5, 6]]
+
+  # Putting column names
+    #             0         1           2      3        4        5         6
+  df.columns = ['Date', 'Month_num', 'Year', 'Hour', 'Minute', 'User', 'Message']
+  df['Month'] = [calendar.month_name[df['Month_num'][i]] for i in range(0, df.shape[0])] 
+  df['day_name'] =  [datetime.datetime.strptime(df['Month'][i] + ' ' + str(df['Date'][i]) + ', 20' + str(df['Year'][i]), '%B %d, %Y').strftime('%A') for i in range(0, df.shape[0])]
+  df['only_Date'] = [datetime.datetime.strptime(df['Month'][i] + ' ' + str(df['Date'][i]) + ', 20' + str(df['Year'][i]), '%B %d, %Y').strftime('%A') for i in range(0, df.shape[0])]
+
+  period = []
+  for Hour in df[['day_name', 'Hour']]['Hour']:
+      if Hour == 23:
+          period.append(str(Hour) + "-" + str('00'))
+      elif Hour == 0:
+          period.append(str('00') + "-" + str(Hour + 1)) 
+      else:
+          period.append(str(Hour) + "-" + str(Hour + 1))
+
+  df['period'] = period
+
+  return df
