@@ -2,25 +2,10 @@ import re
 import datetime
 import calendar
 import pandas as pd
+import textblob
+import apply_sentiment
 
 re1 = r'WhatsApp\sNotification'
-
-def preprocess(df):
-    
-    df['only_Date'] = datetime.datetime.strptime(calendar.month_name[df['Month']] + ' ' + str(df['Date']) + ', 20' + str(df['Year']), '%B %d, %Y').strftime('%A')
-    
-    period = []
-    for Hour in df[['day_name', 'Hour']]['Hour']:
-        if Hour == 23:
-            period.append(str(Hour) + "-" + str('00'))
-        elif Hour == 0:
-            period.append(str('00') + "-" + str(Hour + 1)) 
-        else:
-            period.append(str(Hour) + "-" + str(Hour + 1))
-
-    df['period'] = period   
-
-    return df 
 
 def Message_extractor(chat, pattern, n, z):
 
@@ -39,7 +24,6 @@ def Message_extractor(chat, pattern, n, z):
 
   # Making dataframe
   df = pd.DataFrame(chat)
-
 
   # Taking metrics of columns
   v = []
@@ -73,4 +57,22 @@ def Message_extractor(chat, pattern, n, z):
 
   df['period'] = period
 
-  return df
+  df1=df[['User','Message']]
+
+  for message in df1['Message']:
+
+        analysis = textblob.TextBlob(message)
+
+        if analysis.sentiment.subjectivity <= 0.5:
+
+            index_label = df1[df1['Message'] == message].index[0]
+            
+            df1 = df1.drop(index_label)
+
+  df1.to_csv(r'C:\Users\aruna\OneDrive\Desktop\Arun\Assignment-Sem 8\Code\Text-Thread_Explorer-main_3\output1.csv',index=False)
+
+  df1=apply_sentiment.main()
+
+  df1.to_csv(r'C:\Users\aruna\OneDrive\Desktop\Arun\Assignment-Sem 8\Code\Text-Thread_Explorer-main_3\output1.csv',index=False)
+  
+  return df,df1

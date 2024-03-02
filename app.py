@@ -15,11 +15,13 @@ if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode("utf-8")
     # st.text(data)
-    df = preprocessor.Message_extractor(data ,r'(\d\d)/(\d\d)/(\d\d),\s(\d{1,2}):(\d\d)(\sam|\spm|\sAM|\sPM|)\s-\s', -1, 0)
-    # df = preprocessor.preprocess(df)
+    df,df1 = preprocessor.Message_extractor(data ,r'(\d\d)/(\d\d)/(\d\d),\s(\d{1,2}):(\d\d)(\sam|\spm|\sAM|\sPM|)\s-\s', -1, 0)
     st.title("Chat Analysis")
-    # modified_df = df.drop(columns=['Month_num', 'day', 'only_Date', 'hour', 'minute', 'period', 'Year', 'Month'])
+    #modified_df = df.drop(columns=['Month_num', 'day', 'only_Date', 'hour', 'minute', 'period', 'Year', 'Month'])
     st.dataframe(df)
+    st.write(" ")
+    st.title("Sentiment Analysis")
+    st.dataframe(df1)
 
     # fetch User Message frequency
     User_counts = df['User'].value_counts()
