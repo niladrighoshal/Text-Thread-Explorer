@@ -1,22 +1,15 @@
 import pandas as pd
 import tensorflow as tf
-from nltk.stem import PorterStemmer
+import nltk as nl
 import joblib
 import random
 import numpy as np
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Embedding, LSTM, Dense, Bidirectional
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.regularizers import l2
 
 def get_text(text):
-    tokenizer3 = Tokenizer()
+    tokenizer3 = tf.keras.preprocessing.text.Tokenizer() 
     tokenizer3.fit_on_texts(text)
     word_index3 = tokenizer3.word_index
-    stemmer=PorterStemmer()
+    stemmer=nl.stem.PorterStemmer()
     stemmed_wordss = [stemmer.stem(word) for word in word_index3.keys()]
     tokens_list= tokenizer3.texts_to_sequences([stemmed_wordss])[0]
 

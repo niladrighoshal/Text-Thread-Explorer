@@ -19,6 +19,7 @@ if uploaded_file is not None:
     st.title("Chat Analysis")
     #modified_df = df.drop(columns=['Month_num', 'day', 'only_Date', 'hour', 'minute', 'period', 'Year', 'Month'])
     st.dataframe(df)
+    
     st.write(" ")
     st.title("Sentiment Analysis")
     st.dataframe(df1)
